@@ -1,0 +1,94 @@
+# serverless.yml
+service: cfn-tools
+
+provider:
+  name: aws
+  stage: prod
+  region: eu-west-1
+  profile: ${env:AWS_DEFAULT_PROFILE}
+  deploymentBucket: ${env:S3_DEPLOYMENT_BUCKET}
+  stackTags: # Optional CF stack tags
+    Owner: support@cloudreach.com
+    KillDate: never
+    Environment: PROD
+  environment:
+    KMS_KEY: alias/ec2stash
+  iamRoleStatements: # permissions for all of your functions can be set here
+    - Effect: Allow
+      Action:
+        - "ssm:DescribeParameters"
+        - "ssm:GetParameters"
+        - "kms:Decrypt"
+      Resource: "*"
+
+functions:
+  secretstore:
+    handler: cfn-secretstore.lambda_handler
+    name: secretstore
+    description: CFN secretstore Helper
+    runtime: python2.7
+    memorySize: "256"
+    timeout: 300
+    tags: # Optional CF stack tags
+      Owner: support@cloudreach.com
+      KillDate: never
+    package:
+      exclude:
+        - ./**
+      include:
+        - cfn-secretstore.py
+
+
+
+
+resources:
+  Description: "AWS Lambda Function: CfnSecretStore"
+  Resources:
+
+    KMSKey:
+      Type: "AWS::KMS::Key"
+      Properties:
+        Description: ${self:provider.environment.KMS_KEY}
+        Enabled: True
+        KeyPolicy:
+          Version: "2012-10-17"
+          Id: "ec2stash"
+          Statement:
+            -
+              Sid: "Allow Lambda role to use the key"
+              Effect: "Allow"
+              Principal:
+                AWS:
+                  Fn::Join: ["", [ "arn:aws:iam::" , { "Ref": "AWS::AccountId" } , ":root" ] ]
+              Action:
+                - "kms:*"
+              Resource: "*"
+    KeyAlias:
+      Type: AWS::KMS::Alias
+      Properties:
+        AliasName: ${self:provider.environment.KMS_KEY}
+        TargetKeyId:
+          Ref: KMSKey
+
+    ExampleParameter:
+      Type: "AWS::SSM::Parameter"
+      Properties:
+        Name: "example.secretstore"
+        Type: "String"
+        Value: "ssm parameter automatic created from lambda-cfn-secretstore"
+        Description: "Parameter Example"
+
+  Outputs:
+    LambdaArn:
+      Description: CFN SSM parameter store
+      Value:
+        Fn::GetAtt: [ SecretstoreLambdaFunction, Arn ]
+      Export:
+        Name: CfnSecretStore
+
+    KMSKey:
+      Description: CFN KMS Key used for encrypt parameter store
+      Value:
+        Fn::GetAtt: [ KMSKey, Arn ]
+      Export:
+        Name: CfnSecretStoreKMSKey

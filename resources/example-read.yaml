@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Example: Read from CfnSecretStore"
+Parameters:
+  Secret:
+    Description: "Secret To read"
+    Type: String
+    Default: "example.secretstore"
+
+Resources:
+  SecureParam:
+    Type: Custom::CfnSecretStore
+    Properties:
+      ServiceToken: !ImportValue CfnSecretStore
+      Name: !Ref Secret
+
+Outputs:
+  ParamVal:
+    Description: Value in SSM param store
+    Value: !GetAtt SecureParam.Value
+
+  ParamArn:
+    Description: Arn of param in SSM param store
+    Value: !GetAtt SecureParam.Arn

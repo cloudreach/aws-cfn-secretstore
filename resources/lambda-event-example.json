@@ -1,0 +1,12 @@
+{
+  "StackId": "arn:aws:cloudformation:eu-west-1:11111111111:stack/stack-name/27657770-8622-11e6-99ca-500c423e34d2",
+  "ResponseURL": "http://pre-signed-S3-url-for-response",
+  "ResourceProperties": {
+    "ServiceToken": "arn:aws:lambda:eu-west-1:11111111111:function:lambda-cfn-secretstore",
+    "Name": "example.secretstore"
+  },
+  "RequestType": "Create",
+  "ResourceType": "Custom::CfnSecretStore",
+  "RequestId": "372abc42-28d5-497d-b2e6-321c938f70d1",
+  "LogicalResourceId": "SecureParam"
+}
